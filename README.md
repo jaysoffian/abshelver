@@ -1,13 +1,15 @@
 # abshelver
 
-`abshelver` is a web app to help import new audiobooks and organize your existing audiobooks in your [Audiobookshelf](https://www.audiobookshelf.org/) (ABS) library. It does two things:
+**abshelver** is a companion web app to [Audiobookshelf](https://www.audiobookshelf.org/) to help with importing and organizing your audiobook library:
 
-- **Import**: imports audiobooks from an import directory to your library, naming the destination directory and file(s) according to audiobook title, narrator(s), author(s), series and sequence, pre-filled from embedded tags. You can correct these values and preview the import before any action is taken. Besides importing the audiobook file(s), an ABS-compatible `metadata.json` is written into the destination directory.
-- **Organize**: organizes your library by scanning for ABS `metadata.json` files and then renaming directories and files as needed, and removing stray files and empty directories. Each operation is previewed and you may select/deselect whichever operations you want before executing those operations.
+- **Import** audiobooks from an import directory to your library, naming the destination directory and file(s) according to audiobook title, narrator(s), author(s), series and sequence, with values pre-filled from audiofile metadata tags. You can edit these values and preview the import before any action is taken. Besides importing the audiobook file(s), an ABS-compatible `metadata.json` is written to the destination directory.
+- **Organize** your library by scanning for ABS `metadata.json` files and then renaming audiobook directories and files to match, optionally removing stray files and empty directories. All actions to be taken are previewed first. Select only those actions you want to be taken.
+
+(See [this repo's wiki](https://github.com/jaysoffian/abshelver/wiki) for examples of the web UI.)
 
 ## Library Layout
 
-This program uses a single fixed library layout. The layout is not configurable.
+This program uses a single hard-coded library layout as follows:
 
 ```
 /audiobooks/
@@ -32,6 +34,8 @@ For many authors, consider listing just a few and "et al" as the final author.
 For many narrators such as a full cast performance, consider "Full Cast" as the narrator.
 
 `/`, `\` and `:` in names become ` - `.
+
+(See [this repo's wiki](https://github.com/jaysoffian/abshelver/wiki) for how this looks with a real-world library.)
 
 ## Configuration
 
