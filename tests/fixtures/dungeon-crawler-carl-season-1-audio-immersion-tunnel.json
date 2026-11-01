@@ -1,0 +1,30 @@
+{
+ "Dungeon Crawler Carl - Season 1 - Audio Immersion Tunnel.m4b": {
+  "format": {
+   "duration": "54745.177333",
+   "tags": {
+    "title": "Dungeon Crawler Carl - Audio Immersion Tunnel Season 1",
+    "artist": "Matt Dinniman",
+    "composer": "Jeff Hays",
+    "album": "Dungeon Crawler Carl Audio Immersion Tunnel",
+    "date": "2024",
+    "genre": "Science Fiction",
+    "track": "1"
+   }
+  },
+  "streams": [
+   {
+    "codec_type": "audio",
+    "codec_name": "aac"
+   },
+   {
+    "codec_type": "data",
+    "codec_name": "bin_data"
+   },
+   {
+    "codec_type": "video",
+    "codec_name": "png"
+   }
+  ]
+ }
+}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}abshelver · Import · {{ selected.name }}{% endblock %}
+{% block content %}
+<h2 class="path mono">{{ downloads_dir }}/{{ selected.name }}{% if selected.is_dir %}/{% endif %}</h2>
+<p class="meta">{{ selected.summary }} · {{ selected.duration_text }}</p>
+
+<details class="source">
+  <summary>Metadata{% if selected.files|length > 1 %} (embedded tags, first file){% else %} (embedded tags){% endif %}</summary>
+  <table class="tags mono small">
+    {% for k, v in selected.tags.items() %}
+    <tr><th>{{ k }}</th><td>{{ v }}</td></tr>
+    {% endfor %}
+  </table>
+</details>
+{% if selected.files|length > 1 %}
+<details class="source">
+  <summary>Track order ({{ selected.files|length }} files)</summary>
+  <ol class="tracks mono small">
+    {% for f in selected.files %}
+    <li>{{ f.name }} <span class="muted">{{ f.duration_text }}{% if f.track is not none %} · track {{ f.track }}{% endif %}</span></li>
+    {% endfor %}
+  </ol>
+</details>
+{% endif %}
+
+<ul id="warnings" class="warnings">
+  {% for n in selected.notes %}<li class="warn" data-static>{{ n }}</li>{% endfor %}
+</ul>
+
+<form id="import-form" data-name="{{ selected.id }}" data-library="{{ library_dir }}" data-downloads="{{ downloads_dir }}" autocomplete="off">
+  <label>Authors <input name="authors" value="{{ selected.prefill.authors }}" placeholder="comma-separated"></label>
+  <label>Narrators <input name="narrators" value="{{ selected.prefill.narrators }}" placeholder="comma-separated"></label>
+  <label>Title <input name="title" value="{{ selected.prefill.title }}"></label>
+  <div class="row">
+    <label class="grow">Series <input name="series" value="{{ selected.prefill.series }}"></label>
+    <label class="seq">Sequence <input name="sequence" value="{{ selected.prefill.sequence }}"></label>
+  </div>
+  {% if selected.ebooks %}
+  <label class="check"><input type="checkbox" name="include_epub" checked> Include <span class="mono">{{ selected.ebooks[0] }}</span></label>
+  {% endif %}
+  {% if selected.is_dir and selected.leftovers %}
+  <label class="check"><input type="checkbox" name="delete_leftovers"> Delete leftovers and remove the folder</label>
+  {% endif %}
+</form>
+
+<section class="preview">
+  <pre class="mono" id="preview-tree">…</pre>
+</section>
+
+<div class="actions">
+  <button id="import-btn" class="primary" disabled>Import</button>
+  <span id="plan-result" class="result"></span>
+</div>
+{% endblock %}

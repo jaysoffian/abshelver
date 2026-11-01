@@ -1,0 +1,33 @@
+{
+ "Train Dreams - A Novella - Denis Johnson/Train Dreams - A Novella - Denis Johnson.m4b": {
+  "format": {
+   "duration": "8559.758299",
+   "tags": {
+    "track": "1/1",
+    "artist": "Denis Johnson",
+    "album": "Train Dreams: A Novella",
+    "date": "2011",
+    "genre": "Audiobook",
+    "title": "Train Dreams: A Novella"
+   }
+  },
+  "streams": [
+   {
+    "codec_type": "audio",
+    "codec_name": "aac"
+   },
+   {
+    "codec_type": "video",
+    "codec_name": "mjpeg"
+   },
+   {
+    "codec_type": "data",
+    "codec_name": "bin_data"
+   },
+   {
+    "codec_type": "video",
+    "codec_name": "mjpeg"
+   }
+  ]
+ }
+}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}abshelver · Organize{% endblock %}
+{% block content %}
+<p class="summary">
+  <span class="mono">{{ library_dir }}/</span> · {{ books }} books, {{ clean }} clean
+  {% if not blocks %}· Nothing to do{% endif %}
+</p>
+
+{% if blocks %}
+<div class="bulk">
+  <label><input type="checkbox" data-bulk="rename" checked> All renames ({{ counts.folder + counts['audio-name'] + counts['ebook-name'] }})</label>
+  <label><input type="checkbox" data-bulk="stray"> All strays ({{ counts.stray }})</label>
+  <label><input type="checkbox" data-bulk="empty-dir"> All empty dirs ({{ counts['empty-dir'] }})</label>
+</div>
+
+{% for block, items in blocks.items() %}
+<section class="block">
+  <h3 class="path mono">{% if abs_url %}<a href="{{ abs_url }}" target="_blank" rel="noopener" title="Open Audiobookshelf">{% endif %}{{ block or '.' }}/{% if abs_url %}</a>{% endif %}</h3>
+  <ul class="issues">
+    {% for i in items %}
+    <li class="issue kind-{{ i.kind }}{% if not i.actionable %} info{% endif %}" data-id="{{ i.id }}">
+      {% if i.actionable %}
+      <input type="checkbox" data-id="{{ i.id }}" data-group="{{ 'rename' if i.op == 'rename' else i.kind }}"{% if i.default_on %} checked{% endif %}>
+      {% else %}
+      <span class="nocheck"></span>
+      {% endif %}
+      <span class="kind">{{ i.action }}</span>
+      <span class="change mono">
+        {% if i.dst %}
+          {% set a = i.src if i.kind == 'folder' else i.src.rsplit('/', 1)[-1] %}
+          {% set b = i.dst if i.kind == 'folder' else i.dst.rsplit('/', 1)[-1] %}
+          {% set h = highlight(a, b) %}
+          <span class="before">{{ h[0] }}<mark>{{ h[1] }}</mark>{{ h[3] }}</span>
+          <span class="after">→ {{ h[0] }}<mark>{{ h[2] }}</mark>{{ h[3] }}</span>
+        {% elif i.src %}
+          <span class="before">{{ i.src.rsplit('/', 1)[-1] }}{% if i.kind == 'empty-dir' %}/{% endif %}</span>
+        {% endif %}
+        {% if i.note %}<span class="note">{{ i.note }}</span>{% endif %}
+        {% if i.blocked %}<span class="note warn">Not applicable: {{ i.blocked }}</span>{% endif %}
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endfor %}
+
+<div class="actions" id="plan">
+  <button id="apply-btn" class="primary" disabled>Apply</button>
+  <span id="plan-result" class="result"></span>
+</div>
+{% endif %}
+{% endblock %}

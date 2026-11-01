@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}abshelver · Import{% endblock %}
+{% block content %}
+<p class="summary"><span class="mono">{{ downloads_dir }}/</span>{% if not candidates %} · Nothing to import{% endif %}</p>
+{% if candidates %}
+<table class="candidates">
+  <thead>
+    <tr><th>Audiobook</th><th>Files</th><th>Duration</th><th>Author</th><th>Title</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for r in candidates %}
+    <tr data-href="/import/{{ urlquote(r.name) }}">
+      <td class="mono"><a href="/import/{{ urlquote(r.name) }}">{{ r.name }}{% if r.is_dir %}/{% endif %}</a></td>
+      <td class="nowrap">{{ r.summary }}</td>
+      <td class="nowrap">{{ r.duration_text }}</td>
+      <td>{{ r.authors or '—' }}</td>
+      <td>{{ r.title or '—' }}</td>
+      <td class="nowrap">{% if r.in_library %}<span class="flag">Title in library</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% if others %}
+<h3 class="muted">Not audiobooks</h3>
+<ul class="others mono">
+  {% for r in others %}<li>{{ r.name }}{% if r.is_dir %}/{% endif %}</li>{% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

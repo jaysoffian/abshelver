@@ -1,0 +1,31 @@
+{
+ "A Gentleman in Moscow.m4b": {
+  "format": {
+   "duration": "64383.470023",
+   "tags": {
+    "title": "A Gentleman in Moscow - A Novel",
+    "artist": "Amor Towles",
+    "album_artist": "Amor Towles",
+    "composer": "Nicholas Guy Smith",
+    "album": "A Gentleman in Moscow",
+    "date": "2016-09-06",
+    "genre": "Literature & Fiction:Genre Fiction:Literary Fiction",
+    "track": "1"
+   }
+  },
+  "streams": [
+   {
+    "codec_type": "audio",
+    "codec_name": "aac"
+   },
+   {
+    "codec_type": "data",
+    "codec_name": "bin_data"
+   },
+   {
+    "codec_type": "video",
+    "codec_name": "mjpeg"
+   }
+  ]
+ }
+}

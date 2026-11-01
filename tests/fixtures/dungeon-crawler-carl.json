@@ -1,0 +1,36 @@
+{
+ "Dungeon Crawler Carl/Dungeon Crawler Carl꞉ A LitRPG∕Gamelit Adventure.m4b": {
+  "format": {
+   "duration": "48693.061678",
+   "tags": {
+    "title": "Dungeon Crawler Carl",
+    "artist": "Matt Dinniman",
+    "album_artist": "Matt Dinniman",
+    "album": "Dungeon Crawler Carl (Unabridged)",
+    "genre": "Movie, TV & Video Game Tie-Ins, Suspense, Contemporary",
+    "date": "2021",
+    "composer": "Jeff Hays",
+    "SUBTITLE": "A LitRPG/Gamelit Adventure",
+    "PUBLISHER": "Audible Studios",
+    "LANGUAGE": "English",
+    "AUDIBLE_ASIN": "B08V8B2CGV",
+    "SERIES": "Dungeon Crawler Carl",
+    "PART": "1"
+   }
+  },
+  "streams": [
+   {
+    "codec_type": "audio",
+    "codec_name": "aac"
+   },
+   {
+    "codec_type": "data",
+    "codec_name": "bin_data"
+   },
+   {
+    "codec_type": "video",
+    "codec_name": "mjpeg"
+   }
+  ]
+ }
+}

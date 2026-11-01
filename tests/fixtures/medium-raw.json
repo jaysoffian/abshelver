@@ -1,0 +1,21 @@
+{
+ "Medium Raw/Medium Raw.mp3": {
+  "format": {
+   "duration": "32383.660408",
+   "tags": {
+    "album": "Medium Raw",
+    "artist": "Anthony Bourdain "
+   }
+  },
+  "streams": [
+   {
+    "codec_type": "audio",
+    "codec_name": "mp3"
+   },
+   {
+    "codec_type": "video",
+    "codec_name": "mjpeg"
+   }
+  ]
+ }
+}
