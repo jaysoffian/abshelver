@@ -27,10 +27,12 @@ abshelver/
   importer.py     ImportForm + plan() -> Plan(ops, warnings); execute()
   organizer.py    plan_indexed() -> ops + issue-id -> op-index; apply() rescans first
   ops.py          THE ONLY MODULE THAT TOUCHES DISK
+  absapi.py       read-only Audiobookshelf API lookups (item/author/series ids), cached 60 s
+  tree.py         the Library tab's tree view-model
   api.py          JSON API, the one-at-a-time job runner, view-model dicts
-  app.py          FastAPI app, logging, the three HTML pages
+  app.py          FastAPI app, logging, the HTML pages
   cli.py          `abshelver organize [--doit]`
-  templates/      base, imports (list), import (one candidate), organize
+  templates/      base, imports (list), import (one candidate), organize, library
   static/         abshelver.css, abshelver.js (no build step, no dependencies)
 tests/
   fixtures/*.json captured ffprobe output (tags only) of real downloads
@@ -106,6 +108,19 @@ recomputes the plan on every keystroke via `POST /api/imports/{name}/plan`
 and renders the destination tree client-side. The plan endpoints return the
 op index of each file / issue so the page can mark lines or rows done as the
 job runs and follow the current one.
+
+The Library tab is `tree` over the audio and ebook files only, built by
+`tree.py` from the same scan organize uses. Books with five or more audio
+files fold to one line, with a zip download (`download.py`, streamed,
+uncompressed). Each file shows size and duration; sizes are a stat, durations
+are `ffprobe`, memoized in-process by (path, size, mtime) and warmed by a
+background thread at startup so the first page load is not the slow one. With `AUDIOBOOKSHELF_API_KEY` set, `absapi.py` fetches the
+book library's items, authors and series once a minute and the tree links each
+name to its Audiobookshelf page; items are matched by `relPath`, authors and
+series by folded name. ABS serves its pages under `ROUTER_BASE_PATH`, which it
+announces as `<base href>` on its index page; `absapi.py` reads that so the
+configured URL may be the bare host. The key is read-only; create a guest user
+with only the *Access* permissions and mint the key for that user.
 
 The look follows the Audiobookshelf web client: its colours, its fonts
 (Source Sans Pro and Ubuntu Mono, bundled as woff2 in `abshelver/static/fonts/`

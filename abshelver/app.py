@@ -3,20 +3,21 @@
 import hashlib
 import logging
 import os
+import threading
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from functools import cache
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import quote
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.types import Scope
 
-from abshelver import api, downloads, library, organizer
+from abshelver import absapi, api, download, downloads, layout, library, organizer, tree
 from abshelver.config import get_settings
 
 
@@ -59,6 +60,9 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
         settings.library_dir,
         settings.abs_url or "-",
     )
+    threading.Thread(
+        target=tree.warm, args=(settings.library_dir,), name="warm", daemon=True
+    ).start()
     yield
     logger.info("abshelver shutdown")
 
@@ -167,23 +171,68 @@ def page_import(request: Request, name: str) -> HTMLResponse:
 @app.get("/organize", response_class=HTMLResponse)
 def page_organize(request: Request) -> HTMLResponse:
     settings = get_settings()
-    lib, issues = organizer.rescan(settings.library_dir)
+    _, issues = organizer.rescan(settings.library_dir)
     blocks: dict[str, list[dict[str, Any]]] = {}
     for issue in issues:
         blocks.setdefault(issue.block.as_posix(), []).append(api.issue_view(issue))
-    view = api.library_view(lib, issues)
     return render(
         request,
         "organize.html",
         page="organize",
         blocks=blocks,
-        books=view["books"],
-        clean=view["clean"],
+        actionable=any(i.actionable for i in issues),
         counts={
             k: sum(1 for i in issues if i.kind == k and i.actionable)
             for k in ("folder", "audio-name", "ebook-name", "stray", "empty-dir")
         },
         library_dir=str(settings.library_dir),
+    )
+
+
+@app.get("/library", response_class=HTMLResponse)
+def page_library(request: Request) -> HTMLResponse:
+    settings = get_settings()
+    lib = library.scan(settings.library_dir)
+    links, abs_error = absapi.links(settings)
+    return render(
+        request,
+        "library.html",
+        page="library",
+        tree=tree.build(lib, links),
+        abs_error=abs_error,
+    )
+
+
+@app.get("/files/{rel:path}")
+def file_download(rel: str) -> FileResponse:
+    """Download one audio or ebook file from the library (the Library tab's
+    file links). Anything else under the library, or outside it, is a 404."""
+    root = get_settings().library_dir.resolve()
+    name = PurePosixPath(rel).name
+    if not (layout.is_audio(name) or layout.is_ebook(name)):
+        raise HTTPException(404)
+    path = (root / rel).resolve()
+    if not path.is_relative_to(root) or not path.is_file():
+        raise HTTPException(404)
+    return FileResponse(path, filename=name)
+
+
+@app.get("/zip/{rel:path}")
+def zip_download(rel: str) -> StreamingResponse:
+    """Download a book folder's audio and ebook files as one uncompressed zip."""
+    root = get_settings().library_dir.resolve()
+    folder = (root / rel).resolve()
+    if not folder.is_relative_to(root) or folder == root or not folder.is_dir():
+        raise HTTPException(404)
+    files = download.book_files(folder)
+    if not files:
+        raise HTTPException(404)
+    return StreamingResponse(
+        download.zip_stream(files),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f"attachment; filename*=UTF-8''{quote(folder.name)}.zip"
+        },
     )
 
 

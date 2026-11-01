@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}abshelver · Library{% endblock %}
+{% block content %}
+{#- prefix: one letter per ancestor level, v = a vertical line continues, s = blank -#}
+{% macro cells(prefix, last) %}{% for ch in prefix %}<i class="{{ ch }}"></i>{% endfor %}<i class="{{ 'l' if last else 't' }}"></i>{% endmacro %}
+{% macro lines(nodes, prefix, tail=true) %}
+{%- for n in nodes -%}
+{%- set last = loop.last and tail -%}
+{%- set below = prefix ~ ('s' if last else 'v') -%}
+{%- if n.kind == 'fold' -%}
+<details class="fold"><summary><span class="pre">{{ cells(prefix, last) }}</span><span class="name">{{ n.name }} <span class="count">{{ n.count }} files</span></span><span class="meta">{{ n.meta }}</span><a class="dl" href="{{ n.dl }}" download title="Download all {{ n.count }} files as a zip">⤓</a></summary>
+{{ lines(n.children, prefix, last) }}</details>
+{% else -%}
+<div class="line {{ n.kind }}"><span class="pre">{{ cells(prefix, last) }}</span><span class="name">
+{%- if n.kind == 'file' %}{{ n.name }}
+{%- elif n.url %}<a href="{{ n.url }}" target="_blank" rel="noopener">{{ n.name }}</a>/
+{%- else %}{{ n.name }}/{% endif -%}
+{%- if n.note %} <span class="note">· {{ n.note }}</span>{% endif %}</span>
+{%- if n.meta %}<span class="meta">{{ n.meta }}</span>{% endif -%}
+{%- if n.dl %}<a class="dl" href="{{ n.dl }}" download title="Download">⤓</a>{% endif %}</div>
+{{ lines(n.children, below) }}
+{%- endif -%}
+{%- endfor -%}
+{% endmacro %}
+<p class="summary">
+  <span class="mono">{{ tree.root }}/</span> · {{ tree.summary }}
+  {%- if abs_error %} · <span class="flag" title="{{ abs_error }}">Audiobookshelf links unavailable</span>{% endif %}
+</p>
+<div class="tree mono">
+{{ lines(tree.nodes, '') }}
+</div>
+{% endblock %}

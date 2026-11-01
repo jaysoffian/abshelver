@@ -1,4 +1,4 @@
-"""Settings from the three environment variables. No file, no defaults."""
+"""Settings from the environment variables. No file, no defaults."""
 
 import os
 from dataclasses import dataclass
@@ -15,6 +15,7 @@ class Settings:
     import_dir: Path
     library_dir: Path
     abs_url: str | None
+    abs_api_key: str | None  # read-only API key, for links on the Library tab
 
     def check(self) -> None:
         """Fail fast when either directory is missing."""
@@ -40,4 +41,5 @@ def get_settings() -> Settings:
         import_dir=_required("ABSHELVER_IMPORT_DIR"),
         library_dir=_required("ABSHELVER_LIBRARY_DIR"),
         abs_url=url,
+        abs_api_key=os.environ.get("AUDIOBOOKSHELF_API_KEY", "").strip() or None,
     )

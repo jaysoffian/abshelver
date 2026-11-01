@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% block title %}abshelver · Import{% endblock %}
 {% block content %}
-<p class="summary"><span class="mono">{{ downloads_dir }}/</span>{% if not candidates %} · Nothing to import{% endif %}</p>
+<p class="summary"><span class="mono">{{ downloads_dir }}/</span></p>
+{% if not candidates %}<p class="summary">Nothing to import.</p>{% endif %}
 {% if candidates %}
 <table class="candidates">
   <thead>

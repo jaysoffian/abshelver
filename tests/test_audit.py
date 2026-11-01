@@ -169,11 +169,7 @@ def test_issue_table(tree):
     assert empty.src == PurePosixPath("Kurt Vonnegut/Slaughterhouse-Five {Ethan Hawk}")
     assert not empty.default_on
 
-    [multi] = kinds["multi-file"]
-    assert multi.block == PurePosixPath(
-        "Anthony Bourdain/Kitchen Confidential {Anthony Bourdain}"
-    )
-    assert not multi.actionable
+    assert "multi-file" not in kinds  # several tracks is normal, not a finding
 
     [nometa] = kinds["no-metadata"]
     assert nometa.block == PurePosixPath("Nobody/Unscanned {X}")
@@ -268,9 +264,9 @@ def test_plan_rejects_unknown_and_informational(tree):
     issues = audit.audit(lib)
     with pytest.raises(organizer.PlanError):
         organizer.plan(lib, issues, ["audio-name:nope"])
-    multi = next(i for i in issues if i.kind == "multi-file")
+    nometa = next(i for i in issues if i.kind == "no-metadata")
     with pytest.raises(organizer.PlanError):
-        organizer.plan(lib, issues, [multi.id])
+        organizer.plan(lib, issues, [nometa.id])
 
 
 def test_blocked_when_destination_exists(tmp_path):
@@ -313,7 +309,7 @@ def test_apply_against_tmp(tree):
     # everything actionable is gone; only the informational rows remain, plus
     # the author dir left empty by moving Starship Troopers
     kinds = sorted(i.kind for i in issues2)
-    assert kinds == ["empty-dir", "multi-file", "no-metadata"]
+    assert kinds == ["empty-dir", "no-metadata"]
     assert (tree / "Robert Anson Heinlein/Starship Troopers {Lloyd James}").is_dir()
     assert (
         tree

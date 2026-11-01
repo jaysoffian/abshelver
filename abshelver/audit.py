@@ -16,7 +16,6 @@ Kind = Literal[
     "ebook-name",
     "stray",
     "empty-dir",
-    "multi-file",
     "no-metadata",
 ]
 
@@ -99,16 +98,6 @@ def audit_book(bf: BookFolder, occupied: set[PurePosixPath]) -> list[Issue]:
         return issues
 
     exp = layout.expected(bf.book, len(bf.audio))
-    if len(bf.audio) > 1:
-        issues.append(
-            Issue(
-                "multi-file",
-                bf.rel,
-                None,
-                None,
-                f"{len(bf.audio)} audio files; names checked against the {{TT}} scheme",
-            )
-        )
 
     def rename(kind: Kind, src: PurePosixPath, dst: PurePosixPath) -> None:
         if src == dst:
@@ -148,5 +137,5 @@ def audit(library: Library) -> list[Issue]:
 
 
 def clean_count(library: Library, issues: list[Issue]) -> int:
-    dirty = {i.block for i in issues if i.kind != "multi-file"}
+    dirty = {i.block for i in issues}
     return sum(1 for bf in library.books if bf.rel not in dirty)

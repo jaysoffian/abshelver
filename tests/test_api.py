@@ -26,6 +26,7 @@ def client(tmp_path, monkeypatch, fake_ffprobe):
     monkeypatch.setenv("ABSHELVER_IMPORT_DIR", str(dl))
     monkeypatch.setenv("ABSHELVER_LIBRARY_DIR", str(root))
     monkeypatch.setenv("AUDIOBOOKSHELF_URL", "https://abs.example/")
+    monkeypatch.delenv("AUDIOBOOKSHELF_API_KEY", raising=False)
     config.get_settings.cache_clear()
     from abshelver.app import app
 
@@ -57,7 +58,23 @@ def test_pages(client):
     r = c.get("/organize")
     assert r.status_code == 200
     assert "The Dutch House <mark>{Tom Hanks} </mark>- Ann Patchett.mp3" in r.text
-    assert "1 books, 0 clean" in r.text
+    assert "Library is organized" not in r.text
+    r = c.get("/library")
+    assert r.status_code == 200
+    href = "/files/Ann%20Patchett/The%20Dutch%20House%20%7BTom%20Hanks%7D/The%20Dutch%20House%20-%20Ann%20Patchett.mp3"
+    assert f'<a class="dl" href="{href}" download' in r.text
+    assert '<span class="name">The Dutch House - Ann Patchett.mp3</span>' in r.text
+    assert '<span class="name">Ann Patchett/</span>' in r.text
+    assert (
+        '<span class="pre"><i class="l"></i></span>'
+        '<span class="name">Ann Patchett/</span>' in r.text
+    )
+    assert (
+        '<span class="pre"><i class="s"></i><i class="l"></i></span>'
+        '<span class="name">The Dutch House {Tom Hanks}/</span>' in r.text
+    )
+    assert "1 books, 0 series, 1 authors" in r.text
+    assert "not in Audiobookshelf" not in r.text  # no token: unlinked, no notes
 
 
 def test_import_flow(client):
@@ -127,3 +144,45 @@ def test_static_cache_busting(client):
         "/static/abshelver.css?v=abc", headers={"If-None-Match": r.headers["etag"]}
     )
     assert r.status_code == 304
+
+
+def test_file_download(client):
+    c, dl, root = client
+    book = "Ann Patchett/The Dutch House {Tom Hanks}"
+    r = c.get(f"/files/{book}/The Dutch House - Ann Patchett.mp3")
+    assert r.status_code == 200
+    assert r.content == b"x"
+    assert "attachment" in r.headers["content-disposition"]
+    assert "The%20Dutch%20House" in r.headers["content-disposition"]
+    assert c.get(f"/files/{book}/metadata.json").status_code == 404  # not audio/ebook
+    assert c.get(f"/files/{book}/nope.mp3").status_code == 404
+    (dl / "outside.mp3").write_bytes(b"y")
+    assert c.get(f"/files/{book}/../../../downloads/outside.mp3").status_code == 404
+    assert c.get("/files/../downloads/outside.mp3").status_code == 404
+
+
+def test_zip_download(client):
+    import io
+    import zipfile
+
+    c, dl, root = client
+    book = "Ann Patchett/The Dutch House {Tom Hanks}"
+    (root / book / "The Dutch House - Ann Patchett.epub").write_bytes(b"e" * 3)
+    (root / book / "cover.jpg").write_bytes(b"c")
+    r = c.get(f"/zip/{book}")
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "application/zip"
+    assert r.headers["content-disposition"].endswith(
+        "The%20Dutch%20House%20%7BTom%20Hanks%7D.zip"
+    )
+    with zipfile.ZipFile(io.BytesIO(r.content)) as zf:
+        assert zf.namelist() == [
+            "The Dutch House - Ann Patchett.mp3",
+            "The Dutch House - Ann Patchett.epub",
+        ]
+        assert zf.read("The Dutch House - Ann Patchett.epub") == b"eee"
+        assert zf.testzip() is None
+    assert c.get("/zip/Ann Patchett").status_code == 404  # no files of its own
+    assert c.get("/zip/").status_code == 404
+    assert c.get("/zip/../downloads").status_code == 404
+    assert c.get(f"/zip/{book}/nope").status_code == 404

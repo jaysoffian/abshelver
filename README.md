@@ -4,6 +4,7 @@
 
 - **Import** audiobooks from an import directory to your library, naming the destination directory and file(s) according to audiobook title, narrator(s), author(s), series and sequence, with values pre-filled from audiofile metadata tags. You can edit these values and preview the import before any action is taken. Besides importing the audiobook file(s), an ABS-compatible `metadata.json` is written to the destination directory.
 - **Organize** your library by scanning for ABS `metadata.json` files and then renaming audiobook directories and files to match, optionally removing stray files and empty directories. All actions to be taken are previewed first. Select only those actions you want to be taken.
+- **Library** shows a `tree`-style listing of your library. Author, series and book names link to their Audiobookshelf pages when an API key is configured, and audiobooks and ebooks can be downloaded directly.
 
 (See [this repo's wiki](https://github.com/jaysoffian/abshelver/wiki) for examples of the web UI.)
 
@@ -39,14 +40,15 @@ For many narrators such as a full cast performance, consider "Full Cast" as the 
 
 ## Configuration
 
-| Variable | Required | Meaning |
-|---|---|---|
-| `ABSHELVER_IMPORT_DIR` | yes | directory scanned for import candidates |
-| `ABSHELVER_LIBRARY_DIR` | yes | the Audiobookshelf library root |
-| `AUDIOBOOKSHELF_URL` | no | base URL of the Audiobookshelf web UI, for the *Audiobookshelf ↗* link |
+Configuration is via the following environment variables:
 
-The `Dockerfile` defaults the first two to `/downloads` and `/audiobooks`. Startup
-fails if either directory does not exist.
+- `ABSHELVER_IMPORT_DIR`: Directory scanned for audiobooks to import to your library. Required. `Dockerfile` default is `/downloads`.
+
+- `ABSHELVER_LIBRARY_DIR`: Audiobookshelf library root directory. Required. `Dockerfile` default is `/audiobooks`.
+
+- `AUDIOBOOKSHELF_URL`: Audiobookshelf base URL. e.g. `https://audiobookshelf.example.org`. No default. Configure to add a button that links to your Audiobookshelf installation.
+
+- `AUDIOBOOKSHELF_API_KEY`: [Audiobookshelf API key](https://audiobookshelf.org/docs/documentation/server-management/api-keys). No default. Configure to allow Library page items to link to their corresponding author, series, and audiobook pages in your Audiobookshelf installation. `AUDIOBOOKSHELF_URL` must also be configured. This key should be associated with a read-only guest user. e.g. create a guest user named `abshelver` with a random password and grant the user only the three "access" permissions. Then create an API key named `abshelver` associated to the `abshelver` guest user.
 
 ## Docker Compose
 
@@ -57,16 +59,16 @@ services:
     user: "568:568"      # same uid/gid as the Audiobookshelf container
     ports: ["8556:8556"]
     environment:
+      ABSHELVER_IMPORT_DIR: /media/downloads
+      ABSHELVER_LIBRARY_DIR: /media/audiobooks
       AUDIOBOOKSHELF_URL: https://audiobooks.example.org
+      AUDIOBOOKSHELF_API_KEY: ${ABS_API_KEY}
     volumes:
-      - /mnt/pool/media/Downloads:/downloads
-      - /mnt/pool/media/AudioBooks:/audiobooks
+      - /path/to/media:/media  # See note 1.
     restart: unless-stopped
 ```
 
-Mount the library at the same path Audiobookshelf uses. If the import directory and the
-library are on the same filesystem, imports are instant renames; otherwise files are copied,
-size-checked, then deleted.
+<sup>1: Files are moved from the import directory to the library directory if both are under the same mount point; otherwise they are copied and then deleted.</sup>
 
 ## CLI
 
@@ -86,4 +88,4 @@ uv run abshelver organize
 
 ## License
 
-[MIT](LICENSE.md).
+[MIT](LICENSE.md)

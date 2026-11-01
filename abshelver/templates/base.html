@@ -19,6 +19,7 @@
   <nav>
     <a href="/"{% if page == 'imports' %} class="current"{% endif %}>Import</a>
     <a href="/organize"{% if page == 'organize' %} class="current"{% endif %}>Organize</a>
+    <a href="/library"{% if page == 'library' %} class="current"{% endif %}>Library</a>
   </nav>
   {% if abs_url %}<a class="ext" href="{{ abs_url }}" target="_blank" rel="noopener">Audiobookshelf ↗</a>{% endif %}
 </header>

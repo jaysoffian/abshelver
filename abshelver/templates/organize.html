@@ -1,17 +1,16 @@
 {% extends "base.html" %}
 {% block title %}abshelver · Organize{% endblock %}
 {% block content %}
-<p class="summary">
-  <span class="mono">{{ library_dir }}/</span> · {{ books }} books, {{ clean }} clean
-  {% if not blocks %}· Nothing to do{% endif %}
-</p>
+<p class="summary"><span class="mono">{{ library_dir }}/</span></p>
+{% if not actionable %}<p class="summary">Library is organized. Nothing to do.</p>{% endif %}
 
-{% if blocks %}
+{% if actionable %}
 <div class="bulk">
   <label><input type="checkbox" data-bulk="rename" checked> All renames ({{ counts.folder + counts['audio-name'] + counts['ebook-name'] }})</label>
   <label><input type="checkbox" data-bulk="stray"> All strays ({{ counts.stray }})</label>
   <label><input type="checkbox" data-bulk="empty-dir"> All empty dirs ({{ counts['empty-dir'] }})</label>
 </div>
+{% endif %}
 
 {% for block, items in blocks.items() %}
 <section class="block">
@@ -44,6 +43,7 @@
 </section>
 {% endfor %}
 
+{% if actionable %}
 <div class="actions" id="plan">
   <button id="apply-btn" class="primary" disabled>Apply</button>
   <span id="plan-result" class="result"></span>
