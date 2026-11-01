@@ -105,4 +105,9 @@ Server-rendered pages, stateless; every page load rescans. The import page
 recomputes the plan on every keystroke via `POST /api/imports/{name}/plan`
 and renders the destination tree client-side. The plan endpoints return the
 op index of each file / issue so the page can mark lines or rows done as the
-job runs and follow the current one. Light and dark follow the OS.
+job runs and follow the current one.
+
+The look follows the Audiobookshelf web client: its colours, its fonts
+(Source Sans Pro and Ubuntu Mono, bundled as woff2 in `abshelver/static/fonts/`
+with their licences). The logo (`abshelver/static/icon.svg`) is our own. Dark
+only, like ABS.

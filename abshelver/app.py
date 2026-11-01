@@ -1,16 +1,20 @@
 """FastAPI app: logging, lifespan, templates, static files, the two pages."""
 
+import hashlib
 import logging
+import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from functools import cache
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.types import Scope
 
 from abshelver import api, downloads, library, organizer
 from abshelver.config import get_settings
@@ -59,19 +63,47 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
     logger.info("abshelver shutdown")
 
 
+class CachedStaticFiles(StaticFiles):
+    """Static files with explicit caching: a URL carrying ?v= (see static_url)
+    changes whenever the content does, so it may be cached forever; any other
+    URL must be revalidated on every use. Browsers otherwise cache favicons,
+    fonts and stylesheets on a heuristic and keep showing stale ones."""
+
+    def file_response(
+        self,
+        full_path: str | os.PathLike[str],
+        stat_result: os.stat_result,
+        scope: Scope,
+        status_code: int = 200,
+    ) -> Response:
+        response = super().file_response(full_path, stat_result, scope, status_code)
+        versioned = b"v=" in scope.get("query_string", b"")
+        response.headers["Cache-Control"] = (
+            "public, max-age=31536000, immutable" if versioned else "no-cache"
+        )
+        return response
+
+
 app = FastAPI(title="abshelver", lifespan=lifespan)
 app.include_router(api.router)
-app.mount("/static", StaticFiles(directory=here / "static"), name="static")
+app.mount("/static", CachedStaticFiles(directory=here / "static"), name="static")
 templates = Jinja2Templates(directory=here / "templates")
 
 
-def static_url(filename: str) -> str:
-    """Cache-busting URL for a /static asset: the file's mtime as ?v=."""
-    p = here / "static" / filename
+@cache
+def static_version(filename: str) -> str | None:
+    """Short content hash of a /static file, computed once per process."""
     try:
-        return f"/static/{filename}?v={int(p.stat().st_mtime)}"
+        data = (here / "static" / filename).read_bytes()
     except OSError:
-        return f"/static/{filename}"
+        return None
+    return hashlib.sha256(data).hexdigest()[:12]
+
+
+def static_url(filename: str) -> str:
+    """Cache-busting URL for a /static asset: ?v= is a hash of its content."""
+    v = static_version(filename)
+    return f"/static/{filename}?v={v}" if v else f"/static/{filename}"
 
 
 def highlight(a: str, b: str) -> tuple[str, str, str, str]:
@@ -95,9 +127,11 @@ jinja_globals["version"] = VERSION
 
 def render(request: Request, name: str, **context: Any) -> HTMLResponse:
     settings = get_settings()
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         request, name, {"abs_url": settings.abs_url, **context}
     )
+    response.headers["Cache-Control"] = "no-cache"  # every load rescans
+    return response
 
 
 @app.get("/", response_class=HTMLResponse)

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<!-- abshelver: a shelf-reading robot in headphones, peeking over a shelf of books -->
+<defs>
+<linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0.3" stop-color="#CD9D49"/>
+<stop offset="1" stop-color="#875D27"/>
+</linearGradient>
+</defs>
+<circle cx="32" cy="32" r="32" fill="#FFFFFF"/>
+<circle cx="32" cy="32" r="30" fill="url(#g)"/>
+<!-- antenna -->
+<rect x="31" y="8" width="2" height="6" fill="#FFFFFF"/>
+<circle cx="32" cy="7" r="2.4" fill="#FFFFFF"/>
+<!-- headphone band -->
+<path d="M16.5 30 V27 A15.5 15.5 0 0 1 47.5 27 V30" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round"/>
+<!-- head -->
+<rect x="19" y="17" width="26" height="24" rx="7" fill="#FFFFFF"/>
+<!-- ear cups -->
+<rect x="12.5" y="24" width="7" height="12" rx="3.5" fill="#FFFFFF"/>
+<rect x="44.5" y="24" width="7" height="12" rx="3.5" fill="#FFFFFF"/>
+<!-- eyes -->
+<circle cx="26.5" cy="28" r="3.1" fill="#5a3b14"/>
+<circle cx="37.5" cy="28" r="3.1" fill="#5a3b14"/>
+<circle cx="27.6" cy="26.9" r="1.1" fill="#FFFFFF"/>
+<circle cx="38.6" cy="26.9" r="1.1" fill="#FFFFFF"/>
+<!-- smile -->
+<path d="M28 34 Q32 37.5 36 34" fill="none" stroke="#5a3b14" stroke-width="1.8" stroke-linecap="round"/>
+<!-- shelf of books in front -->
+<g fill="#FFFFFF" stroke="#A97A33" stroke-width="1.2" stroke-linejoin="round">
+<rect x="11.5" y="42" width="7" height="12" rx="1.2"/>
+<rect x="19.5" y="39" width="7" height="15" rx="1.2"/>
+<rect x="27.5" y="41" width="7" height="13" rx="1.2"/>
+<rect x="35.5" y="38" width="7" height="16" rx="1.2"/>
+<rect x="44.5" y="40" width="7" height="14" rx="1.2" transform="rotate(8 48 54)"/>
+</g>
+<g fill="#A97A33">
+<rect x="13.2" y="45" width="3.6" height="1.4" rx="0.7"/>
+<rect x="21.2" y="42" width="3.6" height="1.4" rx="0.7"/>
+<rect x="29.2" y="44" width="3.6" height="1.4" rx="0.7"/>
+<rect x="37.2" y="41" width="3.6" height="1.4" rx="0.7"/>
+<rect x="46.2" y="43" width="3.6" height="1.4" rx="0.7" transform="rotate(8 48 54)"/>
+</g>
+<rect x="8.5" y="54" width="47" height="3.5" rx="1.5" fill="#FFFFFF"/>
+</svg>

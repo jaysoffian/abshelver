@@ -111,3 +111,19 @@ def test_organize_flow(client):
     assert s["last"]["ok"], s
     assert c.get("/api/library").json()["issues"] == []
     assert not (root / "Empty").exists()
+
+
+def test_static_cache_busting(client):
+    c, _, _ = client
+    html = c.get("/").text
+    assert 'href="/static/icon.svg?v=' in html
+    assert "/static/fonts/SourceSansPro-Regular.woff2?v=" in html
+    assert c.get("/").headers["cache-control"] == "no-cache"
+    r = c.get("/static/abshelver.css")
+    assert r.headers["cache-control"] == "no-cache"
+    r = c.get("/static/abshelver.css?v=abc")
+    assert r.headers["cache-control"] == "public, max-age=31536000, immutable"
+    r = c.get(
+        "/static/abshelver.css?v=abc", headers={"If-None-Match": r.headers["etag"]}
+    )
+    assert r.status_code == 304
