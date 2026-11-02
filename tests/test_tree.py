@@ -79,7 +79,7 @@ def test_tree_structure_and_links(tmp_path, fake_ffprobe):
     )
     assert wool.children[0].meta == "1 B"  # fixture files hold one byte; no duration
 
-    # six mp3s fold into one line; the epub stays its own line
+    # several mp3s fold into one line; the epub stays its own line
     kc = by_name(t.nodes, "Anthony Bourdain").children[0]
     assert [c.kind for c in kc.children] == ["fold", "file"]
     fold = kc.children[0]
@@ -138,3 +138,30 @@ def test_meta_with_duration(tmp_path, fake_ffprobe, monkeypatch):
     kc = by_name(t.nodes, "Anthony Bourdain").children[0]
     assert kc.meta == "55h 13m"  # six files' durations summed
     assert kc.children[0].meta == "6 B"
+
+
+def test_fold_at_two(tmp_path, fake_ffprobe):
+    """Any multi-file book folds, so two tracks get a zip too; one file does not."""
+    root = tmp_path / "lib"
+    write_book(
+        root,
+        "Mary Shelley/Frankenstein {Ada Lockwood}",
+        [f"Frankenstein {{Ada Lockwood}} 0{n} - Mary Shelley.mp3" for n in (1, 2)],
+        {"title": "Frankenstein", "authors": ["Mary Shelley"]},
+    )
+    write_book(
+        root,
+        "Jane Austen/Emma {Rosalind Hale}",
+        ["Emma {Rosalind Hale} - Jane Austen.m4b"],
+        {"title": "Emma", "authors": ["Jane Austen"]},
+    )
+    t = tree.build(library.scan(root), None)
+    frankenstein = by_name(t.nodes, "Mary Shelley").children[0]
+    assert [c.kind for c in frankenstein.children] == ["fold"]
+    assert frankenstein.children[0].count == 2
+    assert (
+        frankenstein.children[0].dl
+        == "/zip/Mary%20Shelley/Frankenstein%20%7BAda%20Lockwood%7D"
+    )
+    emma = by_name(t.nodes, "Jane Austen").children[0]
+    assert [c.kind for c in emma.children] == ["file"]

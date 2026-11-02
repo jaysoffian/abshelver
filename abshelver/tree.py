@@ -14,7 +14,7 @@ from abshelver.library import BookFolder, Library, scan
 
 logger = logging.getLogger(__name__)
 
-FOLD_AT = 5  # a book with this many audio files is shown folded
+FOLD_AT = 2  # a book with this many audio files is shown folded: one line, one zip
 
 
 @dataclass(slots=True)
