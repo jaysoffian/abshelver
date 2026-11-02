@@ -57,9 +57,10 @@ tests/
   Empty keys are omitted, because Audiobookshelf treats `"narrators": []` as
   "clear" rather than "unset". Series is written as `"Name #seq"`; the
   sequence may not contain spaces or `#`.
-- The first image in a source folder (`cover.*`/`folder.*` preferred) is
-  offered as the cover and lands as `cover.<ext>`, which ABS adopts; the box
-  is ticked by default when the audio has no embedded art. Leftovers (cue,
+- A source folder's images (`cover.*`/`folder.*` first) are offered in a
+  Cover drop-down; the chosen one lands as `cover.<ext>`, which ABS adopts.
+  It is preselected to the first image when the audio has no embedded art
+  (no video stream in ffprobe's output), else to None. Leftovers (cue,
   nfo, dot-files, images not used as the cover) stay unless the import
   form's "Delete leftovers" box is ticked, in which case they are deleted
   after the moves and the folder is removed. An epub that was not imported

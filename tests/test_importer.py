@@ -300,7 +300,7 @@ def test_execute_refuses_blocked(env):
     assert (dl / "Medium Raw/Medium Raw.mp3").exists()
 
 
-def test_include_cover(env):
+def test_cover_choice(env):
     dl, root = env
     kc = dl / "Anthony Bourdain - Kitchen Confidential - mp3"
     (kc / "folder.jpg").write_bytes(b"x")
@@ -311,9 +311,9 @@ def test_include_cover(env):
         "Anthony Bourdain - Kitchen Confidential - mp3",
         authors="Anthony Bourdain",
         title="Kitchen Confidential",
-        include_cover=True,
+        cover="folder.jpg",
     )
-    # the first image lands as cover.<ext>; the other is a leftover
+    # the chosen image lands as cover.<ext>; the other is a leftover
     assert [dst.name for _, dst in p.files][-1] == "cover.jpg"
     assert [x.name for x in p.leftovers] == ["back.png"]
     assert not p.removes_source
@@ -324,7 +324,7 @@ def test_include_cover(env):
         "Anthony Bourdain - Kitchen Confidential - mp3",
         authors="Anthony Bourdain",
         title="Kitchen Confidential",
-        include_cover=True,
+        cover="folder.jpg",
         delete_leftovers=True,
     )
     assert [x.name for x in p.deletions] == ["back.png"]
@@ -332,7 +332,7 @@ def test_include_cover(env):
     importer.execute(p)
     assert (root / p.rel_dir / "cover.jpg").exists()
     assert not kc.exists()
-    # unticked: every image stays behind
+    # none chosen: every image stays behind
     _, p = plan_for(
         dl,
         root,
@@ -342,3 +342,13 @@ def test_include_cover(env):
     )
     assert [dst.suffix for _, dst in p.files] == [".m4b"]
     assert [x.suffix for x in p.leftovers] == [".cue", ".jpg"]
+    # an image that is not in the folder blocks the plan
+    _, p = plan_for(
+        dl,
+        root,
+        "Dungeon Crawler Carl",
+        authors="Matt Dinniman",
+        title="Dungeon Crawler Carl",
+        cover="nope.jpg",
+    )
+    assert p.blocked and any("No such image" in w.message for w in p.warnings)

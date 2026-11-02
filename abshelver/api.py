@@ -182,7 +182,9 @@ def inspection_view(insp: downloads.Inspection) -> dict[str, Any]:
         ],
         "ebooks": [e.relative_to(base).as_posix() for e in cand.ebooks],
         "images": [i.relative_to(base).as_posix() for i in cand.images],
-        "cover_default": insp.cover_default,
+        "cover": cand.images[0].relative_to(base).as_posix()
+        if insp.cover_default
+        else "",
         "leftovers": [x.relative_to(base).as_posix() for x in cand.leftovers],
         "tags": dict(sorted(first.tags.items(), key=lambda kv: kv[0].lower()))
         if first

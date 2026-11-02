@@ -105,6 +105,11 @@ form input[type=text], form input:not([type]) {
   font: 15px var(--mono); color: var(--fg-soft); background: var(--primary);
   border: 1px solid var(--line); border-radius: 2px;
 }
+form label.cover { display: flex; align-items: center; gap: .6rem; }
+form select {
+  padding: .3rem .5rem; font: 15px var(--mono); color: var(--fg-soft);
+  background: var(--primary); border: 1px solid var(--line); border-radius: 2px;
+}
 form input::placeholder { color: #6b7280; }
 form input:focus { outline: none; background: var(--bg); border-color: #9ca3af; }
 form .row { display: flex; gap: 1rem; }

@@ -30,7 +30,7 @@ class ImportForm(BaseModel):
     series: str = ""
     sequence: str = ""
     include_epub: bool = True
-    include_cover: bool = False
+    cover: str = ""  # one of the download's images (relative name), "" for none
     delete_leftovers: bool = False
 
     def book(self) -> Book:
@@ -150,14 +150,20 @@ def plan(insp: Inspection, form: ImportForm, lib: Library) -> Plan:
         leftovers.extend(cand.ebooks[1:])
     else:
         leftovers.extend(cand.ebooks)
-    # The first image becomes `cover.<ext>`, which ABS adopts as the cover.
+    # The chosen image becomes `cover.<ext>`, which ABS adopts as the cover.
     # Images not imported are leftovers like any other, so they may be deleted.
-    if cand.images and form.include_cover:
-        cover = cand.images[0]
+    cover = None
+    if form.cover:
+        base = cand.path if cand.is_dir else cand.path.parent
+        cover = next(
+            (i for i in cand.images if i.relative_to(base).as_posix() == form.cover),
+            None,
+        )
+        if cover is None:
+            warnings.append(Warning("block", f"No such image: {form.cover}"))
+    if cover is not None:
         files.append((cover, dest_dir / ("cover" + cover.suffix.lower())))
-        spare_images = cand.images[1:]
-    else:
-        spare_images = cand.images
+    spare_images = tuple(i for i in cand.images if i != cover)
     leftovers.extend(spare_images)
     deletable = [*cand.leftovers, *spare_images]
     # Only an actual overwrite blocks. An existing book folder has a

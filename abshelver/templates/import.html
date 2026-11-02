@@ -35,11 +35,14 @@
     <label class="grow">Series <input name="series" value="{{ selected.prefill.series }}"></label>
     <label class="seq">Sequence <input name="sequence" value="{{ selected.prefill.sequence }}"></label>
   </div>
+  {% if selected.images %}
+  <label class="cover">Cover <select name="cover">
+    <option value="">None</option>
+    {% for i in selected.images %}<option value="{{ i }}"{% if i == selected.cover %} selected{% endif %}>{{ i }}</option>{% endfor %}
+  </select></label>
+  {% endif %}
   {% if selected.ebooks %}
   <label class="check"><input type="checkbox" name="include_epub" checked> Include <span class="mono">{{ selected.ebooks[0] }}</span></label>
-  {% endif %}
-  {% if selected.images %}
-  <label class="check"><input type="checkbox" name="include_cover"{% if selected.cover_default %} checked{% endif %}> Include <span class="mono">{{ selected.images[0] }}</span> as the cover</label>
   {% endif %}
   {% if selected.is_dir and (selected.leftovers or selected.images) %}
   <label class="check"><input type="checkbox" name="delete_leftovers"> Delete leftovers and remove the folder</label>
