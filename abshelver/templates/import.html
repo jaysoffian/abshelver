@@ -45,7 +45,7 @@
   <label class="check"><input type="checkbox" name="include_epub" checked> Include <span class="mono">{{ selected.ebooks[0] }}</span></label>
   {% endif %}
   {% if selected.is_dir and (selected.leftovers or selected.images) %}
-  <label class="check"><input type="checkbox" name="delete_leftovers"> Delete leftovers and remove the folder</label>
+  <label class="check"><input type="checkbox" name="delete_leftovers"> Delete leftovers</label>
   {% endif %}
 </form>
 
