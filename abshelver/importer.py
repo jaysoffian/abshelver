@@ -143,22 +143,23 @@ def plan(insp: Inspection, form: ImportForm, lib: Library) -> Plan:
     files: list[tuple[Path, Path]] = []
     for src, stem in zip(insp.order, exp.audio_stems, strict=True):
         files.append((src, dest_dir / (stem + src.suffix.lower())))
-    # The first image becomes `cover.<ext>`, which ABS adopts as the cover.
-    # Images not imported are leftovers like any other, so they may be deleted.
     leftovers = list(cand.leftovers)
-    if cand.images and form.include_cover:
-        cover = cand.images[0]
-        files.append((cover, dest_dir / ("cover" + cover.suffix.lower())))
-        leftovers.extend(cand.images[1:])
-    else:
-        leftovers.extend(cand.images)
-    deletable = list(leftovers)
     epub = cand.ebooks[0] if cand.ebooks else None
     if epub and form.include_epub:
         files.append((epub, dest_dir / exp.epub_name))
         leftovers.extend(cand.ebooks[1:])
     else:
         leftovers.extend(cand.ebooks)
+    # The first image becomes `cover.<ext>`, which ABS adopts as the cover.
+    # Images not imported are leftovers like any other, so they may be deleted.
+    if cand.images and form.include_cover:
+        cover = cand.images[0]
+        files.append((cover, dest_dir / ("cover" + cover.suffix.lower())))
+        spare_images = cand.images[1:]
+    else:
+        spare_images = cand.images
+    leftovers.extend(spare_images)
+    deletable = [*cand.leftovers, *spare_images]
     # Only an actual overwrite blocks. An existing book folder has a
     # metadata.json, so that is the collision that catches duplicates.
     warnings.extend(
