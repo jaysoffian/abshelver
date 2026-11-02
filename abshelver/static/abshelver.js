@@ -223,18 +223,13 @@
         if (last.ok) {
           result.className = "result ok";
           result.textContent = `Imported to ${form.dataset.library}/${last.result.dest_dir}/`;
-          const absLink = $("header .ext");
-          if (absLink) {
-            result.appendChild(document.createTextNode("  "));
-            const a = document.createElement("a");
-            a.href = absLink.href; a.target = "_blank"; a.rel = "noopener";
-            a.textContent = "Open Audiobookshelf ↗";
-            result.appendChild(a);
+          // one download fewer: keep the Import tab's count honest without a reload
+          const tab = $("header nav a[href='/import']");
+          if (tab) {
+            const m = tab.textContent.match(/\((\d+)\)/);
+            const n = m ? Number(m[1]) - 1 : 0;
+            tab.textContent = n > 0 ? `Import (${n})` : "Import";
           }
-          result.appendChild(document.createTextNode("  "));
-          const back = document.createElement("a");
-          back.href = "/import"; back.textContent = "Back to the list";
-          result.appendChild(back);
         } else {
           result.className = "result error";
           result.textContent = last.done ? `Failed after ${last.done} of ${last.ops.length} steps.` : "Failed on the first step.";
@@ -342,7 +337,7 @@
         markRows(last.done, owned ? last.failed : undefined, last.reason);
         if (last.ok) {
           result.className = "result ok";
-          result.textContent = `Applied ${last.done} ops.  `;
+          result.textContent = "Done.  ";
         } else {
           result.className = "result error";
           result.textContent = (last.done ? `Failed after ${last.done} of ${last.ops.length} ops.` : "Failed on the first op.") + "  ";
