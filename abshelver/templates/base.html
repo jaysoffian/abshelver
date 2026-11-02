@@ -17,9 +17,9 @@
   <a class="logo" href="/"><img src="{{ static_url('icon.svg') }}" alt="" width="40" height="40"></a>
   <a class="brand" href="/">abshelver</a>
   <nav>
-    <a href="/"{% if page == 'imports' %} class="current"{% endif %}>Import</a>
+    <a href="/"{% if page == 'library' %} class="current"{% endif %}>Library</a>
     <a href="/organize"{% if page == 'organize' %} class="current"{% endif %}>Organize</a>
-    <a href="/library"{% if page == 'library' %} class="current"{% endif %}>Library</a>
+    <a href="/import"{% if page == 'imports' %} class="current"{% endif %}>Import{% if pending %} ({{ pending }}){% endif %}</a>
   </nav>
   {% if abs_url %}<a class="ext" href="{{ abs_url }}" target="_blank" rel="noopener">Audiobookshelf ↗</a>{% endif %}
 </header>

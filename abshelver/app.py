@@ -12,7 +12,13 @@ from typing import Any
 from urllib.parse import quote
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingResponse
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    RedirectResponse,
+    Response,
+    StreamingResponse,
+)
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.types import Scope
@@ -129,16 +135,28 @@ jinja_globals["urlquote"] = lambda s: quote(s, safe="")
 jinja_globals["version"] = VERSION
 
 
+def pending_imports(import_dir: Path) -> int:
+    """How many downloads have audio: the badge on the Import tab. A walk
+    of the import directory, no probing."""
+    return sum(1 for c in downloads.scan(import_dir) if c.audio)
+
+
 def render(request: Request, name: str, **context: Any) -> HTMLResponse:
     settings = get_settings()
     response = templates.TemplateResponse(
-        request, name, {"abs_url": settings.abs_url, **context}
+        request,
+        name,
+        {
+            "abs_url": settings.abs_url,
+            "pending": pending_imports(settings.import_dir),
+            **context,
+        },
     )
     response.headers["Cache-Control"] = "no-cache"  # every load rescans
     return response
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/import", response_class=HTMLResponse)
 def page_imports(request: Request) -> HTMLResponse:
     settings = get_settings()
     rows = api.candidate_rows(settings.import_dir, library.scan(settings.library_dir))
@@ -189,7 +207,7 @@ def page_organize(request: Request) -> HTMLResponse:
     )
 
 
-@app.get("/library", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
 def page_library(request: Request) -> HTMLResponse:
     settings = get_settings()
     lib = library.scan(settings.library_dir)
@@ -201,6 +219,11 @@ def page_library(request: Request) -> HTMLResponse:
         tree=tree.build(lib, links),
         abs_error=abs_error,
     )
+
+
+@app.get("/library", include_in_schema=False)
+def page_library_alias() -> RedirectResponse:
+    return RedirectResponse("/", status_code=301)
 
 
 @app.get("/files/{rel:path}")

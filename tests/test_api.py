@@ -47,10 +47,16 @@ def wait_idle(c):
 def test_pages(client):
     c, dl, root = client
     assert c.get("/health").json()["status"] == "ok"
-    r = c.get("/")
+    r = c.get("/import")
     assert r.status_code == 200
     assert "Dungeon Crawler Carl" in r.text
     assert "Audiobookshelf ↗" in r.text
+    assert ">Import (6)</a>" in r.text  # the badge counts downloads with audio
+    r = c.get("/")  # the Library tab is the landing page
+    assert r.status_code == 200 and 'class="current">Library' in r.text
+    assert ">Import (6)</a>" in r.text
+    r = c.get("/library", follow_redirects=False)
+    assert r.status_code == 301 and r.headers["location"] == "/"
     r = c.get("/import/Train%20Dreams%20-%20A%20Novella%20-%20Denis%20Johnson")
     assert r.status_code == 200
     assert 'value="Denis Johnson"' in r.text

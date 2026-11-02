@@ -233,7 +233,7 @@
           }
           result.appendChild(document.createTextNode("  "));
           const back = document.createElement("a");
-          back.href = "/"; back.textContent = "Back to the list";
+          back.href = "/import"; back.textContent = "Back to the list";
           result.appendChild(back);
         } else {
           result.className = "result error";
