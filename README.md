@@ -2,7 +2,7 @@
 
 **abshelver** is a companion web app to [Audiobookshelf](https://www.audiobookshelf.org/) to help with importing and organizing your audiobook library:
 
-- **Import** audiobooks from an import directory to your library, naming the destination directory and file(s) according to audiobook title, narrator(s), author(s), series and sequence, with values pre-filled from audiofile metadata tags. You can edit these values and preview the import before any action is taken. Besides importing the audiobook file(s), an ABS-compatible `metadata.json` is written to the destination directory.
+- **Import** audiobooks from an import directory to your library, naming the destination directory and file(s) according to audiobook title, narrator(s), author(s), series and sequence, with values pre-filled from audiofile metadata tags. You can edit these values and preview the import before any action is taken. Besides the audiobook file(s), an epub and a cover image can be imported alongside, and an ABS-compatible `metadata.json` is written to the destination directory.
 - **Organize** your library by scanning for ABS `metadata.json` files and then renaming audiobook directories and files to match, optionally removing stray files and empty directories. All actions to be taken are previewed first. Select only those actions you want to be taken.
 - **Library** shows a `tree`-style listing of your library. Author, series and book names link to their Audiobookshelf pages when an API key is configured, and audiobooks and ebooks can be downloaded directly.
 

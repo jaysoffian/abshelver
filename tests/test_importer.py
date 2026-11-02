@@ -298,3 +298,47 @@ def test_execute_refuses_blocked(env):
     with pytest.raises(importer.ops.OpError):
         importer.execute(p)
     assert (dl / "Medium Raw/Medium Raw.mp3").exists()
+
+
+def test_include_cover(env):
+    dl, root = env
+    kc = dl / "Anthony Bourdain - Kitchen Confidential - mp3"
+    (kc / "folder.jpg").write_bytes(b"x")
+    (kc / "back.png").write_bytes(b"x")
+    insp, p = plan_for(
+        dl,
+        root,
+        "Anthony Bourdain - Kitchen Confidential - mp3",
+        authors="Anthony Bourdain",
+        title="Kitchen Confidential",
+        include_cover=True,
+    )
+    # the first image lands as cover.<ext>; the other is a leftover
+    assert [dst.name for _, dst in p.files][-1] == "cover.jpg"
+    assert [x.name for x in p.leftovers] == ["back.png"]
+    assert not p.removes_source
+    # ...and a deletable one
+    _, p = plan_for(
+        dl,
+        root,
+        "Anthony Bourdain - Kitchen Confidential - mp3",
+        authors="Anthony Bourdain",
+        title="Kitchen Confidential",
+        include_cover=True,
+        delete_leftovers=True,
+    )
+    assert [x.name for x in p.deletions] == ["back.png"]
+    assert p.leftovers == () and p.removes_source
+    importer.execute(p)
+    assert (root / p.rel_dir / "cover.jpg").exists()
+    assert not kc.exists()
+    # unticked: every image stays behind
+    _, p = plan_for(
+        dl,
+        root,
+        "Dungeon Crawler Carl",
+        authors="Matt Dinniman",
+        title="Dungeon Crawler Carl",
+    )
+    assert [dst.suffix for _, dst in p.files] == [".m4b"]
+    assert [x.suffix for x in p.leftovers] == [".cue", ".jpg"]

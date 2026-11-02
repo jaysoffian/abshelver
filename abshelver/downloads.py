@@ -22,6 +22,7 @@ class Candidate:
     is_dir: bool
     audio: tuple[Path, ...]  # natural-sorted; see Inspection.order for track order
     ebooks: tuple[Path, ...]
+    images: tuple[Path, ...]  # cover candidates; `cover.*`/`folder.*` first
     leftovers: tuple[Path, ...]
     dirs: tuple[Path, ...]  # subdirectories, deepest first
     truncated: bool = False  # the walk stopped at MAX_DEPTH with content below
@@ -73,8 +74,13 @@ def candidate(entry: Path) -> Candidate:
     ebooks = sorted(
         (f for f in files if layout.is_ebook(f.name)), key=lambda p: natural_key(str(p))
     )
+    images = sorted(
+        (f for f in files if layout.is_image(f.name)),
+        key=lambda p: (p.stem.lower() not in ("cover", "folder"), natural_key(str(p))),
+    )
     leftovers = sorted(
-        set(files) - set(audio) - set(ebooks), key=lambda p: natural_key(str(p))
+        set(files) - set(audio) - set(ebooks) - set(images),
+        key=lambda p: natural_key(str(p)),
     )
     return Candidate(
         name=entry.name,
@@ -82,6 +88,7 @@ def candidate(entry: Path) -> Candidate:
         is_dir=entry.is_dir(),
         audio=tuple(audio),
         ebooks=tuple(ebooks),
+        images=tuple(images),
         leftovers=tuple(leftovers),
         dirs=tuple(dirs),
         truncated=truncated,
@@ -176,6 +183,16 @@ class Inspection:
     @property
     def first(self) -> Probe | None:
         return self.probes[self.order[0]] if self.order else None
+
+    @property
+    def cover_default(self) -> bool:
+        """Tick "include cover" when there is an image and the audio has no
+        embedded art."""
+        return (
+            bool(self.candidate.images)
+            and self.first is not None
+            and not self.first.cover
+        )
 
 
 def inspect(cand: Candidate) -> Inspection:

@@ -20,6 +20,7 @@ class Probe:
     duration: float
     codec: str | None
     error: str | None = None
+    cover: bool = False  # has embedded cover art (a video stream)
     _lower: dict[str, str] = field(default_factory=dict, repr=False, compare=False)
 
     def tag(self, *names: str) -> str | None:
@@ -83,10 +84,12 @@ def parse(data: dict) -> Probe:
         ),
         None,
     )
+    cover = any(s.get("codec_type") == "video" for s in data.get("streams") or [])
     return Probe(
         tags=tags,
         duration=duration,
         codec=codec,
+        cover=cover,
         _lower={k.lower(): v for k, v in tags.items()},
     )
 

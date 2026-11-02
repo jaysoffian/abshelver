@@ -57,10 +57,13 @@ tests/
   Empty keys are omitted, because Audiobookshelf treats `"narrators": []` as
   "clear" rather than "unset". Series is written as `"Name #seq"`; the
   sequence may not contain spaces or `#`.
-- Leftovers in a source folder (jpg, cue, nfo, dot-files) stay unless the
-  import form's "Delete leftovers" box is ticked, in which case they are
-  deleted after the moves and the folder is removed. An epub that was not
-  imported is never deleted. Otherwise the folder is removed only when the
+- The first image in a source folder (`cover.*`/`folder.*` preferred) is
+  offered as the cover and lands as `cover.<ext>`, which ABS adopts; the box
+  is ticked by default when the audio has no embedded art. Leftovers (cue,
+  nfo, dot-files, images not used as the cover) stay unless the import
+  form's "Delete leftovers" box is ticked, in which case they are deleted
+  after the moves and the folder is removed. An epub that was not imported
+  is never deleted. Otherwise the folder is removed only when the
   moves leave it empty.
 - Import file moves are always the `move` op: rename first, and on EXDEV
   copy, verify size, delete. EXDEV also happens between two bind mounts of

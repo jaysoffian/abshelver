@@ -14,6 +14,8 @@ from pathlib import PurePosixPath
 
 AUDIO_EXTENSIONS = frozenset({".m4b", ".m4a", ".mp3", ".aac", ".flac", ".ogg", ".opus"})
 EBOOK_EXTENSIONS = frozenset({".epub"})
+# Offered as the book's cover on import; ABS reads any of these as `cover.*`.
+IMAGE_EXTENSIONS = frozenset({".jpg", ".jpeg", ".png", ".webp"})
 # Files ABS owns inside a book folder; left alone by organize.
 ABS_FILE_RE = re.compile(r"^(cover\.[^.]+|metadata\.json)$")
 # `.tmp`/`.part`-style inner extensions mark leftovers of interrupted writes;
@@ -157,6 +159,10 @@ def is_audio(name: str) -> bool:
 
 def is_ebook(name: str) -> bool:
     return _media(name, EBOOK_EXTENSIONS)
+
+
+def is_image(name: str) -> bool:
+    return _media(name, IMAGE_EXTENSIONS)
 
 
 def is_abs_file(name: str) -> bool:

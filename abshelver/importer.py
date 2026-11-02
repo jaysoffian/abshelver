@@ -30,6 +30,7 @@ class ImportForm(BaseModel):
     series: str = ""
     sequence: str = ""
     include_epub: bool = True
+    include_cover: bool = False
     delete_leftovers: bool = False
 
     def book(self) -> Book:
@@ -142,7 +143,16 @@ def plan(insp: Inspection, form: ImportForm, lib: Library) -> Plan:
     files: list[tuple[Path, Path]] = []
     for src, stem in zip(insp.order, exp.audio_stems, strict=True):
         files.append((src, dest_dir / (stem + src.suffix.lower())))
+    # The first image becomes `cover.<ext>`, which ABS adopts as the cover.
+    # Images not imported are leftovers like any other, so they may be deleted.
     leftovers = list(cand.leftovers)
+    if cand.images and form.include_cover:
+        cover = cand.images[0]
+        files.append((cover, dest_dir / ("cover" + cover.suffix.lower())))
+        leftovers.extend(cand.images[1:])
+    else:
+        leftovers.extend(cand.images)
+    deletable = list(leftovers)
     epub = cand.ebooks[0] if cand.ebooks else None
     if epub and form.include_epub:
         files.append((epub, dest_dir / exp.epub_name))
@@ -166,9 +176,9 @@ def plan(insp: Inspection, form: ImportForm, lib: Library) -> Plan:
             )
         )
 
-    # Leftovers (jpg, cue, nfo, dot-files) stay unless asked; an epub that
-    # was not imported is never deleted.
-    deletions = list(cand.leftovers) if form.delete_leftovers else []
+    # Leftovers (cue, nfo, dot-files, images not used as the cover) stay
+    # unless asked; an epub that was not imported is never deleted.
+    deletions = deletable if form.delete_leftovers else []
     leftovers = [x for x in leftovers if x not in deletions]
     removes_source = cand.is_dir and not leftovers and not cand.truncated
     plan_ops: list[Op] = [Op("mkdir", dst=dest_dir)]

@@ -98,6 +98,7 @@
         series: fd.get("series") || "",
         sequence: fd.get("sequence") || "",
         include_epub: form.elements.include_epub ? form.elements.include_epub.checked : true,
+        include_cover: form.elements.include_cover ? form.elements.include_cover.checked : false,
         delete_leftovers: form.elements.delete_leftovers ? form.elements.delete_leftovers.checked : false,
       };
     }

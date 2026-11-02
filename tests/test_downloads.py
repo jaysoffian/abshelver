@@ -58,7 +58,9 @@ def test_scan_lists_entries(dl):
     assert by["Anthony Bourdain - Kitchen Confidential - mp3"].summary == "28 × mp3"
     assert by["Train Dreams - A Novella - Denis Johnson"].summary == "1 × m4b + epub"
     assert by["notes.txt"].summary == "no audio"
-    assert len(by["Dungeon Crawler Carl"].leftovers) == 2
+    dcc = by["Dungeon Crawler Carl"]
+    assert [x.suffix for x in dcc.images] == [".jpg"]
+    assert [x.suffix for x in dcc.leftovers] == [".cue"]
     assert all(
         c.name != ".DS_Store" for c in cands
     )  # top-level dot-entries are skipped
@@ -148,3 +150,19 @@ def test_track_order_falls_back_to_natural_sort(dl, fake_ffprobe):
     assert (
         insp.prefill.title == ""
     )  # multi-file with no album: never the per-track title
+
+
+def test_cover_default(dl, tmp_path):
+    # the m4b has embedded art: offer the jpg, but unticked
+    insp = inspect(dl, "Dungeon Crawler Carl")
+    assert insp.first is not None and insp.first.cover
+    assert [x.suffix for x in insp.candidate.images] == [".jpg"]
+    assert not insp.cover_default
+    # no audio art at all: ticked; `cover.*`/`folder.*` sort first
+    kc = dl / "Anthony Bourdain - Kitchen Confidential - mp3"
+    (kc / "back.png").write_bytes(b"x")
+    (kc / "folder.jpg").write_bytes(b"x")
+    insp = inspect(dl, "Anthony Bourdain - Kitchen Confidential - mp3")
+    assert insp.first is not None and not insp.first.cover
+    assert [x.name for x in insp.candidate.images] == ["folder.jpg", "back.png"]
+    assert insp.cover_default
