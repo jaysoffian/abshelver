@@ -1,10 +1,10 @@
 """ffprobe wrapper. Results are memoized in-process by (path, size, mtime);
 failures are not, so a transient error is retried on the next lookup."""
 
+import functools
 import json
 import logging
 import subprocess
-import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -39,10 +39,6 @@ class Probe:
             return None
         head = raw.split("/", 1)[0].strip()
         return int(head) if head.isdigit() else None
-
-
-_memo: dict[tuple[str, int, int], Probe] = {}
-_lock = threading.Lock()
 
 
 def run_ffprobe(path: Path) -> dict:
@@ -95,24 +91,23 @@ def parse(data: dict) -> Probe:
     )
 
 
+# Enough entries for every audio file in a large library, so a scan never
+# evicts its own results before the next page load.
+@functools.lru_cache(maxsize=8192)
+def _probe(path: str, size: int, mtime_ns: int) -> Probe:
+    """Memoized on success only: a raised error is not cached, so a timeout or
+    a flaky mount is retried on the next lookup."""
+    return parse(run_ffprobe(Path(path)))
+
+
 def probe(path: Path) -> Probe:
     st = path.stat()
-    key = (str(path), st.st_size, st.st_mtime_ns)
-    with _lock:
-        hit = _memo.get(key)
-    if hit is not None:
-        return hit
     try:
-        result = parse(run_ffprobe(path))
+        return _probe(str(path), st.st_size, st.st_mtime_ns)
     except (ProbeError, json.JSONDecodeError) as exc:
         logger.warning("probe failed for %s: %s", path, exc)
-        # Not memoized: a timeout or a flaky mount should not stick until restart.
         return Probe(tags={}, duration=0.0, codec=None, error=str(exc))
-    with _lock:
-        _memo[key] = result
-    return result
 
 
 def clear_memo() -> None:
-    with _lock:
-        _memo.clear()
+    _probe.cache_clear()
