@@ -82,7 +82,7 @@ def test_cross_device_move_overwrites_a_stale_temp(tmp_path, exdev):
     assert list(dst.parent.iterdir()) == [dst]
 
 
-def test_probe_failures_are_not_memoized(tmp_path, monkeypatch):
+def test_probe_failures_are_remembered_until_ttl(tmp_path, monkeypatch):
     path = tmp_path / "x.m4b"
     path.write_bytes(b"x")
     calls = 0
@@ -96,9 +96,36 @@ def test_probe_failures_are_not_memoized(tmp_path, monkeypatch):
 
     monkeypatch.setattr(probe, "run_ffprobe", run)
     probe.clear_memo()
+    now = 1000.0
+    monkeypatch.setattr(probe.time, "monotonic", lambda: now)
     first = probe.probe(path)
     assert first.error and first.duration == 0
+    assert probe.probe(path).error  # still within the TTL: not retried
+    assert calls == 1
+    now += probe.FAILURE_TTL
     second = probe.probe(path)
     assert second.error is None and second.duration == 7
     assert probe.probe(path).duration == 7
-    assert calls == 2  # the failure was retried, the success is cached
+    assert calls == 2  # the failure was retried after the TTL, success cached
+
+
+def test_probe_missing_ffprobe_is_not_remembered(tmp_path, monkeypatch):
+    path = tmp_path / "x.m4b"
+    path.write_bytes(b"x")
+    calls = 0
+
+    def run(p: Path) -> dict:
+        nonlocal calls
+        calls += 1
+        raise probe.FFprobeMissingError("ffprobe is not installed")
+
+    monkeypatch.setattr(probe, "run_ffprobe", run)
+    probe.clear_memo()
+    assert probe.probe(path).error
+    assert probe.probe(path).error
+    assert calls == 2
+
+
+def test_probe_stat_error_is_reported(tmp_path):
+    probe.clear_memo()
+    assert probe.probe(tmp_path / "gone.m4b").error

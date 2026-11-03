@@ -1,10 +1,13 @@
-"""ffprobe wrapper. Results are memoized in-process by (path, size, mtime);
-failures are not, so a transient error is retried on the next lookup."""
+"""ffprobe wrapper. Results are memoized in-process by (path, size, mtime).
+Failures are remembered too, but only for FAILURE_TTL, so a broken file isn't
+re-probed on every page load while a transient error still clears itself.
+Replacing a broken file changes its size or mtime, so it's probed afresh."""
 
 import functools
 import json
 import logging
 import subprocess
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -13,6 +16,13 @@ logger = logging.getLogger(__name__)
 
 class ProbeError(Exception):
     pass
+
+
+class FFprobeMissingError(ProbeError):
+    """Not about any one file, so never remembered as a failure."""
+
+
+FAILURE_TTL = 15 * 60  # seconds
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,7 +56,7 @@ def run_ffprobe(path: Path) -> dict:
     cmd = [
         "ffprobe",
         "-v",
-        "quiet",
+        "error",
         "-print_format",
         "json",
         "-show_format",
@@ -58,11 +68,14 @@ def run_ffprobe(path: Path) -> dict:
             cmd, capture_output=True, text=True, check=False, timeout=15
         )
     except FileNotFoundError as exc:
-        raise ProbeError("ffprobe is not installed") from exc
+        raise FFprobeMissingError("ffprobe is not installed") from exc
     except subprocess.TimeoutExpired as exc:
         raise ProbeError("ffprobe timed out") from exc
     if result.returncode != 0 or not result.stdout.strip():
-        raise ProbeError(f"ffprobe failed (exit {result.returncode})")
+        lines = result.stderr.strip().splitlines()
+        reason = lines[-1] if lines else f"exit {result.returncode}"
+        reason = reason.removeprefix(f"{path}: ")  # callers name the file
+        raise ProbeError(f"ffprobe failed: {reason}")
     return json.loads(result.stdout)
 
 
@@ -95,19 +108,38 @@ def parse(data: dict) -> Probe:
 # evicts its own results before the next page load.
 @functools.lru_cache(maxsize=8192)
 def _probe(path: str, size: int, mtime_ns: int) -> Probe:
-    """Memoized on success only: a raised error is not cached, so a timeout or
-    a flaky mount is retried on the next lookup."""
+    """Memoized on success only; `probe` remembers failures separately."""
     return parse(run_ffprobe(Path(path)))
 
 
+# (path, size, mtime_ns) -> (failed Probe, monotonic expiry). Only broken
+# files land here, so it stays small without eviction.
+_failures: dict[tuple[str, int, int], tuple[Probe, float]] = {}
+
+
+def _failed(path: Path, exc: Exception) -> Probe:
+    logger.warning("probe failed for %s: %s", path, exc)
+    return Probe(tags={}, duration=0.0, codec=None, error=str(exc))
+
+
 def probe(path: Path) -> Probe:
-    st = path.stat()
     try:
-        return _probe(str(path), st.st_size, st.st_mtime_ns)
+        st = path.stat()
+    except OSError as exc:
+        return _failed(path, exc)  # no stable key to remember it under
+    key = (str(path), st.st_size, st.st_mtime_ns)
+    hit = _failures.get(key)
+    if hit and time.monotonic() < hit[1]:
+        return hit[0]
+    try:
+        return _probe(*key)
     except (ProbeError, json.JSONDecodeError) as exc:
-        logger.warning("probe failed for %s: %s", path, exc)
-        return Probe(tags={}, duration=0.0, codec=None, error=str(exc))
+        result = _failed(path, exc)
+        if not isinstance(exc, FFprobeMissingError):
+            _failures[key] = (result, time.monotonic() + FAILURE_TTL)
+        return result
 
 
 def clear_memo() -> None:
     _probe.cache_clear()
+    _failures.clear()
