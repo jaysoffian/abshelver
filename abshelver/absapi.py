@@ -107,7 +107,10 @@ def fetch(abs_url: str, token: str) -> Links:
 
 class _Cache:
     lock = threading.Lock()
-    at = 0.0  # time.monotonic() of the last fetch attempt
+    # time.monotonic() of the last fetch attempt. Starts at -inf, not 0.0:
+    # monotonic counts from boot, so 0.0 would read as fresh for TTL seconds
+    # after the host starts.
+    at = float("-inf")
     links: Links | None = None
     error: str | None = None
 
@@ -144,5 +147,5 @@ def links(settings: Settings) -> tuple[Links | None, str | None]:
 def forget() -> None:
     """Drop the cache (tests)."""
     with _Cache.lock:
-        _Cache.at = 0.0
+        _Cache.at = float("-inf")
         _Cache.links = _Cache.error = None

@@ -51,6 +51,16 @@ def settings(url: str | None = "https://abs.example", token: str | None = "key")
     )
 
 
+def test_cache_is_stale_right_after_boot(fake_abs, monkeypatch):
+    # monotonic counts from boot; a cache stamped 0.0 looked fresh for TTL
+    # seconds after the host came up
+    monkeypatch.setattr(absapi.time, "monotonic", lambda: 30.0)
+    links, error = absapi.links(settings())
+    assert error is None
+    assert links is not None
+    assert fake_abs
+
+
 def test_fetch_builds_maps(fake_abs):
     links = absapi.fetch("https://abs.example", "key")
     assert links.library_id == "lib1"
