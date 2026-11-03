@@ -2,6 +2,7 @@
 it runs, never overwrites anything, and is logged as `op  src → dst`."""
 
 import errno
+import hashlib
 import logging
 import os
 import shutil
@@ -90,8 +91,11 @@ def _same_file(a: Path, b: Path) -> bool:
 def temp_name(dst: Path) -> Path:
     """Where a cross-device copy lands before its final name: a dot-file in
     the destination folder, which Audiobookshelf's watcher ignores, so a scan
-    never sees a half-written file under its final name."""
-    return dst.with_name(f".{dst.name}.abshelver-part")
+    never sees a half-written file under its final name. Named by a hash of
+    the final name, so it is short whatever the final name's length and the
+    same on every attempt, so a leftover of an interrupted copy is reused."""
+    digest = hashlib.sha256(dst.name.encode("utf-8")).hexdigest()[:16]
+    return dst.with_name(f".abshelver-temp-{digest}")
 
 
 def _move_file(src: Path, dst: Path) -> None:

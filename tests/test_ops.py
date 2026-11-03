@@ -39,7 +39,8 @@ def test_cross_device_move_lands_via_dot_temp(tmp_path, exdev, monkeypatch):
     ops.run_one(Op("move", src, dst))
     # the copy was written under a dot-name, which the ABS watcher ignores,
     # and only renamed to its final name once complete
-    assert seen == [".book.m4b.abshelver-part"]
+    assert seen == [ops.temp_name(dst).name]
+    assert seen[0].startswith(".abshelver-temp-")
     assert dst.read_bytes() == b"audio" * 100
     assert not src.exists()
     assert list(dst.parent.iterdir()) == [dst]
@@ -60,6 +61,13 @@ def test_cross_device_move_cleans_up_a_short_copy(tmp_path, exdev, monkeypatch):
         ops.run_one(Op("move", src, dst))
     assert src.exists()  # the source is never deleted on failure
     assert list(dst.parent.iterdir()) == []
+
+
+def test_temp_name_is_short_and_stable():
+    long = Path("lib") / ("é" * 127 + ".m4b")  # 258 bytes, over NAME_MAX
+    assert len(ops.temp_name(long).name.encode()) == 32
+    assert ops.temp_name(long) == ops.temp_name(long)
+    assert ops.temp_name(long) != ops.temp_name(long.with_suffix(".mp3"))
 
 
 def test_cross_device_move_overwrites_a_stale_temp(tmp_path, exdev):
