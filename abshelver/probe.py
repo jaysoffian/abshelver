@@ -55,7 +55,7 @@ def run_ffprobe(path: Path) -> dict:
     ]
     try:
         result = subprocess.run(
-            cmd, capture_output=True, text=True, check=False, timeout=120
+            cmd, capture_output=True, text=True, check=False, timeout=15
         )
     except FileNotFoundError as exc:
         raise ProbeError("ffprobe is not installed") from exc
