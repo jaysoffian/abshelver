@@ -65,7 +65,7 @@ def test_cross_device_move_cleans_up_a_short_copy(tmp_path, exdev, monkeypatch):
 
 def test_temp_name_is_short_and_stable():
     long = Path("lib") / ("é" * 127 + ".m4b")  # 258 bytes, over NAME_MAX
-    assert len(ops.temp_name(long).name.encode()) == 32
+    assert len(ops.temp_name(long).name.encode()) == 48
     assert ops.temp_name(long) == ops.temp_name(long)
     assert ops.temp_name(long) != ops.temp_name(long.with_suffix(".mp3"))
 

@@ -102,12 +102,12 @@ templates = Jinja2Templates(directory=here / "templates")
 
 @cache
 def static_version(filename: str) -> str | None:
-    """Short content hash of a /static file, computed once per process."""
+    """Content hash of a /static file, computed once per process."""
     try:
         data = (here / "static" / filename).read_bytes()
     except OSError:
         return None
-    return hashlib.sha256(data).hexdigest()[:12]
+    return hashlib.md5(data).hexdigest()
 
 
 def static_url(filename: str) -> str:

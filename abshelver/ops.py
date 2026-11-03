@@ -94,7 +94,7 @@ def temp_name(dst: Path) -> Path:
     never sees a half-written file under its final name. Named by a hash of
     the final name, so it is short whatever the final name's length and the
     same on every attempt, so a leftover of an interrupted copy is reused."""
-    digest = hashlib.sha256(dst.name.encode("utf-8")).hexdigest()[:16]
+    digest = hashlib.md5(dst.name.encode("utf-8")).hexdigest()
     return dst.with_name(f".abshelver-temp-{digest}")
 
 
