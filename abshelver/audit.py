@@ -36,9 +36,13 @@ class Issue:
 
     @property
     def id(self) -> str:
-        return (
-            f"{self.kind}:{self.src.as_posix() if self.src else self.block.as_posix()}"
-        )
+        """Names the exact change, not just the source, so an apply whose
+        destination moved since the preview (ABS rewrote metadata.json)
+        aborts as "no such issue" instead of running a different rename."""
+        where = self.src.as_posix() if self.src else self.block.as_posix()
+        if self.dst is None:
+            return f"{self.kind}:{where}"
+        return f"{self.kind}:{where}→{self.dst.as_posix()}"
 
     @property
     def actionable(self) -> bool:
@@ -103,7 +107,9 @@ def audit_book(bf: BookFolder, occupied: set[PurePosixPath]) -> list[Issue]:
         if src == dst:
             return
         blocked = None
-        if dst in occupied:
+        if layout.too_long(dst.name):
+            blocked = f"Name longer than {layout.NAME_MAX} bytes"
+        elif dst in occupied:
             blocked = "Destination already exists"
         elif src == PurePosixPath() or dst.is_relative_to(src):
             blocked = "Destination is inside the source"

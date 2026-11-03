@@ -87,20 +87,33 @@ def _same_file(a: Path, b: Path) -> bool:
         return False
 
 
+def temp_name(dst: Path) -> Path:
+    """Where a cross-device copy lands before its final name: a dot-file in
+    the destination folder, which Audiobookshelf's watcher ignores, so a scan
+    never sees a half-written file under its final name."""
+    return dst.with_name(f".{dst.name}.abshelver-part")
+
+
 def _move_file(src: Path, dst: Path) -> None:
-    """Rename if possible; across filesystems copy, verify size, then delete."""
+    """Rename if possible; across filesystems copy to a dot-temp name next to
+    the target, verify size, rename into place, then delete the source."""
     try:
         src.rename(dst)
         return
     except OSError as exc:
         if exc.errno != errno.EXDEV:
             raise
+    # The temp name is ours alone, so a leftover of an interrupted copy is
+    # simply overwritten.
+    tmp = temp_name(dst)
     try:
-        shutil.copy2(src, dst)
-        if dst.stat().st_size != src.stat().st_size:
+        shutil.copy2(src, tmp)
+        if tmp.stat().st_size != src.stat().st_size:
             raise OpError(f"Size mismatch after copy: {src}")
+        _must_not_exist(dst)
+        tmp.rename(dst)
     except OSError, OpError:
-        dst.unlink(missing_ok=True)
+        tmp.unlink(missing_ok=True)
         raise
     src.unlink()
 

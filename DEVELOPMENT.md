@@ -52,11 +52,15 @@ tests/
   same `op  src → dst` form everywhere). `OpError.reason` is the short cause
   the UI shows on the failed row.
 - Organize's apply re-scans and re-plans from the submitted issue ids before
-  the first write; an id that no longer exists aborts the batch.
+  the first write; an id that no longer exists aborts the batch. An id names
+  the source and the destination, so a destination that changed between the
+  preview and apply counts as "no longer exists".
 - The importer writes the audio first and the seed `metadata.json` last.
   Empty keys are omitted, because Audiobookshelf treats `"narrators": []` as
   "clear" rather than "unset". Series is written as `"Name #seq"`; the
-  sequence may not contain spaces or `#`.
+  sequence may not contain spaces or `#`. A folder or file name over 255
+  bytes blocks the import plan and blocks the organize rename, since the
+  filesystem would refuse it mid-batch.
 - A source folder's images (`cover.*`/`folder.*` first) are offered in a
   Cover drop-down; the chosen one lands as `cover.<ext>`, which ABS adopts.
   It is preselected to the first image when the audio has no embedded art
@@ -67,9 +71,12 @@ tests/
   is never deleted. Otherwise the folder is removed only when the
   moves leave it empty.
 - Import file moves are always the `move` op: rename first, and on EXDEV
-  copy, verify size, delete. EXDEV also happens between two bind mounts of
-  the same filesystem (st_dev is equal, so it can't be predicted); mounting
-  one parent directory for both avoids the copy.
+  copy to a dot-temp name in the destination folder (which the watcher
+  ignores), verify size, rename into place, delete. The temp name is
+  abshelver's own, so a leftover from an interrupted copy is overwritten by
+  the retry. EXDEV also happens between two bind mounts of the same
+  filesystem (st_dev is equal, so it can't be predicted); mounting one parent
+  directory for both avoids the copy.
 - Organize runs file renames, then deletes, then rmdirs, then folder renames
   (deepest first), because deletes and rmdirs are planned with pre-rename
   paths. Two renames sharing a destination, or a folder renamed into its own
@@ -114,14 +121,15 @@ op index of each file / issue so the page can mark lines or rows done as the
 job runs and follow the current one.
 
 The Library tab is `tree` over the audio and ebook files only, built by
-`tree.py` from the same scan organize uses. Books with five or more audio
+`tree.py` from the same scan organize uses. Books with two or more audio
 files fold to one line, with a zip download (`download.py`, streamed,
 uncompressed). Each file shows size and duration; sizes are a stat, durations
-are `ffprobe`, memoized in-process by (path, size, mtime) and warmed by a
-background thread at startup so the first page load is not the slow one. With `AUDIOBOOKSHELF_API_KEY` set, `absapi.py` fetches the
-book library's items, authors and series once a minute and the tree links each
-name to its Audiobookshelf page; items are matched by `relPath`, authors and
-series by folded name. ABS serves its pages under `ROUTER_BASE_PATH`, which it
+are `ffprobe`, memoized in-process by (path, size, mtime), failures
+excluded, and warmed by a background thread at startup so the first page
+load is not the slow one. With `AUDIOBOOKSHELF_API_KEY` set, `absapi.py`
+fetches the book library's items, authors and series once a minute and the
+tree links each name to its Audiobookshelf page; items are matched by
+`relPath`, authors and series by folded name. ABS serves its pages under `ROUTER_BASE_PATH`, which it
 announces as `<base href>` on its index page; `absapi.py` reads that so the
 configured URL may be the bare host. The key is read-only; create a guest user
 with only the *Access* permissions and mint the key for that user.

@@ -1,5 +1,6 @@
 """A fixture tree reproducing every row of the issue table, plus the ops."""
 
+import json
 from pathlib import PurePosixPath
 
 import pytest
@@ -298,6 +299,41 @@ def test_blocked_when_destination_exists(tmp_path):
     )
     assert folder.blocked == "Destination already exists"
     assert not folder.actionable
+
+
+def test_over_long_name_is_blocked(tmp_path):
+    write_book(
+        tmp_path,
+        "A/T",
+        ["T {N} - A.m4b"],
+        {"title": "T", "authors": ["A"], "narrators": ["N" * 252]},
+    )
+    issues = audit.audit(library.scan(tmp_path))
+    blocked = {i.kind: i.blocked for i in issues}
+    assert blocked["audio-name"] == "Name longer than 255 bytes"
+    assert blocked["folder"] == "Name longer than 255 bytes"
+    assert not any(i.actionable for i in issues)
+
+
+def test_id_names_the_destination(tmp_path):
+    """An issue id pins both ends of the rename, so a destination that moved
+    between the preview and apply (ABS rewrote metadata.json) aborts rather
+    than running a different rename."""
+    write_book(
+        tmp_path,
+        "A/T",
+        ["T {N} - A.m4b"],
+        {"title": "T", "authors": ["A"], "narrators": ["N"]},
+    )
+    issues = audit.audit(library.scan(tmp_path))
+    folder = next(i for i in issues if i.kind == "folder")
+    assert folder.id == "folder:A/T→A/T {N}"
+    (tmp_path / "A/T/metadata.json").write_text(
+        json.dumps({"title": "T", "authors": ["A"], "narrators": ["M"]})
+    )
+    with pytest.raises(organizer.PlanError, match="No such issue"):
+        organizer.apply(tmp_path, [folder.id])
+    assert (tmp_path / "A/T").is_dir()  # nothing ran
 
 
 def test_apply_against_tmp(tree):

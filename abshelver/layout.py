@@ -61,14 +61,24 @@ def join_names(names: tuple[str, ...] | list[str]) -> str:
 def sanitize(component: str) -> str:
     """Make one path component safe. `/ \\ :` become ` - `; `? * " < > |`
     and control characters vanish; whitespace and repeated separators are
-    collapsed; leading/trailing whitespace and trailing dots are stripped.
-    Apostrophes, hyphens, accents and other Unicode are kept."""
+    collapsed; leading/trailing whitespace and leading/trailing dots are
+    stripped (a leading dot would make a hidden file, which Audiobookshelf
+    ignores and organize treats as a stray). Apostrophes, hyphens, accents
+    and other Unicode are kept."""
     s = re.sub(r"[/\\:]", SEP, component)
     s = re.sub(r'[?*"<>|]', "", s)
     s = re.sub(r"\s+", " ", s)
     s = "".join(ch for ch in s if unicodedata.category(ch)[0] != "C")
     s = re.sub(r"( -)+ ", SEP, s)
-    return s.strip().rstrip(".").strip()
+    return s.strip().strip(".").strip()
+
+
+# Longest file or folder name most filesystems accept, in bytes of UTF-8.
+NAME_MAX = 255
+
+
+def too_long(name: str) -> bool:
+    return len(name.encode("utf-8")) > NAME_MAX
 
 
 def narrators_suffix(book: Book) -> str:

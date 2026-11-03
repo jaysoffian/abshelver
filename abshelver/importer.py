@@ -164,6 +164,17 @@ def plan(insp: Inspection, form: ImportForm, lib: Library) -> Plan:
     if cover is not None:
         files.append((cover, dest_dir / ("cover" + cover.suffix.lower())))
     spare_images = tuple(i for i in cand.images if i != cover)
+    # The filesystem would refuse an over-long name partway through the batch.
+    long_names = [
+        n for n in (*exp.dir.parts, *(d.name for _, d in files)) if layout.too_long(n)
+    ]
+    if long_names:
+        warnings.append(
+            Warning(
+                "block",
+                f"Name longer than {layout.NAME_MAX} bytes: {long_names[0][:40]}…",
+            )
+        )
     leftovers.extend(spare_images)
     deletable = [*cand.leftovers, *spare_images]
     # Only an actual overwrite blocks. An existing book folder has a

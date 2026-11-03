@@ -81,6 +81,8 @@ def test_multi_file():
         ("A LitRPG/Gamelit Adventure", "A LitRPG - Gamelit Adventure"),
         ("What? Really*", "What Really"),
         ("  Trailing dots...  ", "Trailing dots"),
+        (".hack Zero", "hack Zero"),  # a leading dot would hide the file
+        ("...", ""),
         ("Tab\tand\x00control", "Tab andcontrol"),
         ("Ends - : - with", "Ends - with"),
         ("L'Étranger — naïve", "L'Étranger — naïve"),
@@ -89,6 +91,18 @@ def test_multi_file():
 )
 def test_sanitize(raw, clean):
     assert layout.sanitize(raw) == clean
+
+
+def test_leading_dot_never_yields_a_hidden_file():
+    b = Book(".hack Zero", ("A",), ("N",))
+    assert layout.expected_dir(b) == PurePosixPath("A/hack Zero {N}")
+    assert layout.is_audio(layout.audio_stem(b) + ".m4b")
+
+
+def test_too_long():
+    assert not layout.too_long("x" * 255)
+    assert layout.too_long("x" * 256)
+    assert layout.too_long("é" * 128)  # bytes, not characters
 
 
 def test_sanitize_applies_to_generated_names():

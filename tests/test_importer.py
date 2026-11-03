@@ -209,6 +209,9 @@ def test_warnings(env):
     assert p.blocked
     _, p = plan_for(dl, root, "Medium Raw", authors="?", title="T")
     assert any("empty after removing" in w.message for w in p.warnings) and p.blocked
+    _, p = plan_for(dl, root, "Medium Raw", authors="A", title="T" * 250)
+    assert any("longer than 255 bytes" in w.message for w in p.warnings)
+    assert p.blocked
 
 
 def test_dotfiles_keep_the_source_folder(env):

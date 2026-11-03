@@ -1,4 +1,5 @@
-"""ffprobe wrapper. Results are memoized in-process by (path, size, mtime)."""
+"""ffprobe wrapper. Results are memoized in-process by (path, size, mtime);
+failures are not, so a transient error is retried on the next lookup."""
 
 import json
 import logging
@@ -105,7 +106,8 @@ def probe(path: Path) -> Probe:
         result = parse(run_ffprobe(path))
     except (ProbeError, json.JSONDecodeError) as exc:
         logger.warning("probe failed for %s: %s", path, exc)
-        result = Probe(tags={}, duration=0.0, codec=None, error=str(exc))
+        # Not memoized: a timeout or a flaky mount should not stick until restart.
+        return Probe(tags={}, duration=0.0, codec=None, error=str(exc))
     with _lock:
         _memo[key] = result
     return result
