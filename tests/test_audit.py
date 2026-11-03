@@ -315,6 +315,18 @@ def test_over_long_name_is_blocked(tmp_path):
     assert not any(i.actionable for i in issues)
 
 
+def test_over_long_parent_folder_is_blocked(tmp_path):
+    write_book(
+        tmp_path,
+        "A/T",
+        ["T - A.m4b"],
+        {"title": "T", "authors": ["A" * 300]},
+    )
+    issues = audit.audit(library.scan(tmp_path))
+    blocked = {i.kind: i.blocked for i in issues}
+    assert blocked["folder"] == "Name longer than 255 bytes"
+
+
 def test_id_names_the_destination(tmp_path):
     """An issue id pins both ends of the rename, so a destination that moved
     between the preview and apply (ABS rewrote metadata.json) aborts rather

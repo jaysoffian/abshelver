@@ -107,7 +107,7 @@ def audit_book(bf: BookFolder, occupied: set[PurePosixPath]) -> list[Issue]:
         if src == dst:
             return
         blocked = None
-        if layout.too_long(dst.name):
+        if any(layout.too_long(p) for p in dst.parts):
             blocked = f"Name longer than {layout.NAME_MAX} bytes"
         elif dst in occupied:
             blocked = "Destination already exists"
